@@ -20,8 +20,9 @@ FB_PASSWORD = os.getenv('FB_PASSWORD')
 FB_GROUPS = os.getenv('FB_GROUPS', '').split(',')
 
 # Scraper
-CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 45))
+CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 180))
 POSTS_PER_GROUP = int(os.getenv('POSTS_PER_GROUP', 10))
+GROUPS_PER_CYCLE = int(os.getenv('GROUPS_PER_CYCLE', 5))
 HEADLESS_MODE = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
 
 # Keywords

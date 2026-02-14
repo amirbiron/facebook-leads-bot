@@ -21,9 +21,11 @@ services:
       - key: FB_GROUPS
         sync: false
       - key: CHECK_INTERVAL_MINUTES
-        value: 45
+        value: 180
       - key: POSTS_PER_GROUP
         value: 10
+      - key: GROUPS_PER_CYCLE
+        value: 5
       - key: HEADLESS_MODE
         value: true
       - key: POSITIVE_KEYWORDS

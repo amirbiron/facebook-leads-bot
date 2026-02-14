@@ -57,8 +57,9 @@
 ✓ FB_EMAIL=bot@example.com
 ✓ FB_PASSWORD=SecurePass123
 ✓ FB_GROUPS=url1,url2,url3
-✓ CHECK_INTERVAL_MINUTES=45
+✓ CHECK_INTERVAL_MINUTES=180
 ✓ POSTS_PER_GROUP=10
+✓ GROUPS_PER_CYCLE=5
 ✓ HEADLESS_MODE=true
 ✓ POSITIVE_KEYWORDS=מחפש מפתח,דרוש מפתח,...
 ✓ NEGATIVE_KEYWORDS=בחינם,התנדבות,...
@@ -151,7 +152,7 @@
 אופציה 2: **בדיקה ידנית** (מומלץ)
 - [ ] כתוב פוסט בדיקה בקבוצה פרטית
 - [ ] שים מילת מפתח רלוונטית
-- [ ] חכה לסריקה הבאה (עד 45 דקות)
+- [ ] חכה לסריקה הבאה (עד 3 שעות)
 - [ ] בדוק אם קיבלת התראה
 
 ### כשמגיעה התראה ראשונה

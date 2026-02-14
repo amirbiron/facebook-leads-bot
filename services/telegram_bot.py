@@ -12,7 +12,7 @@ from telegram.ext import (
 
 from config import (
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, 
-    TIMEZONE, CHECK_INTERVAL_MINUTES
+    TIMEZONE, CHECK_INTERVAL_MINUTES, GROUPS_PER_CYCLE
 )
 from models import Post, Database
 from services.keywords import KeywordsMatcher
@@ -113,6 +113,7 @@ class TelegramBot:
             f"• יצרתי קשר: {stats.get('contacted', 0)}\n"
             f"• לא רלוונטי: {stats.get('not_relevant', 0)}\n\n"
             f"⏰ *תדירות בדיקה:* כל {CHECK_INTERVAL_MINUTES} דקות\n"
+            f"👥 *קבוצות בכל סריקה:* עד {GROUPS_PER_CYCLE}\n"
             f"🔄 *סטטוס ניטור:* {status_text}"
         )
         
