@@ -55,14 +55,24 @@ class TelegramBot:
         """הפעלת הבוט"""
         if not self.app:
             await self.setup()
-        
+
+        # Important: starting the Application alone does NOT start receiving updates.
+        # We must start polling (or webhook) via the Updater to make commands like /start work.
         await self.app.initialize()
         await self.app.start()
-        logger.info("בוט טלגרם פועל")
+
+        if not getattr(self.app, "updater", None):
+            logger.warning("Telegram Application has no updater; incoming commands will not be received")
+        else:
+            await self.app.updater.start_polling(drop_pending_updates=True)
+
+        logger.info("בוט טלגרם פועל (polling)")
     
     async def stop(self):
         """עצירת הבוט"""
         if self.app:
+            if getattr(self.app, "updater", None):
+                await self.app.updater.stop()
             await self.app.stop()
             await self.app.shutdown()
             logger.info("בוט טלגרם נעצר")
