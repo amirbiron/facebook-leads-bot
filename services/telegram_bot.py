@@ -12,7 +12,8 @@ from telegram.ext import (
 
 from config import (
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, 
-    TIMEZONE, CHECK_INTERVAL_MINUTES, GROUPS_PER_CYCLE
+    TIMEZONE, CHECK_INTERVAL_MINUTES, GROUPS_PER_CYCLE,
+    QUIET_HOURS_START, QUIET_HOURS_END
 )
 from models import Post, Database
 from services.keywords import KeywordsMatcher
@@ -114,6 +115,7 @@ class TelegramBot:
             f"• לא רלוונטי: {stats.get('not_relevant', 0)}\n\n"
             f"⏰ *תדירות בדיקה:* כל {CHECK_INTERVAL_MINUTES} דקות\n"
             f"👥 *קבוצות בכל סריקה:* עד {GROUPS_PER_CYCLE}\n"
+            f"🌙 *שעות שקטות ({TIMEZONE}):* {QUIET_HOURS_START:02d}:00-{QUIET_HOURS_END:02d}:00\n"
             f"🔄 *סטטוס ניטור:* {status_text}"
         )
         

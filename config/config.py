@@ -23,6 +23,8 @@ FB_GROUPS = os.getenv('FB_GROUPS', '').split(',')
 CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 180))
 POSTS_PER_GROUP = int(os.getenv('POSTS_PER_GROUP', 10))
 GROUPS_PER_CYCLE = int(os.getenv('GROUPS_PER_CYCLE', 5))
+QUIET_HOURS_START = int(os.getenv('QUIET_HOURS_START', 2))  # 02:00
+QUIET_HOURS_END = int(os.getenv('QUIET_HOURS_END', 7))      # 07:00
 HEADLESS_MODE = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
 
 # Keywords
@@ -56,6 +58,12 @@ def validate_config():
         errors.append("חסר FB_GROUPS")
     if not POSITIVE_KEYWORDS:
         errors.append("חסר POSITIVE_KEYWORDS")
+
+    # Quiet hours validation (local time in TIMEZONE)
+    if not (0 <= QUIET_HOURS_START <= 23):
+        errors.append("QUIET_HOURS_START חייב להיות בין 0 ל-23")
+    if not (0 <= QUIET_HOURS_END <= 23):
+        errors.append("QUIET_HOURS_END חייב להיות בין 0 ל-23")
     
     if errors:
         raise ValueError(f"שגיאות בהגדרות:\n" + "\n".join(errors))
