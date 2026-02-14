@@ -116,6 +116,13 @@ NEGATIVE_KEYWORDS=בחינם,התנדבות,סטודנט,עיצוב גרפי
 CHECK_INTERVAL_MINUTES=180  # כל 3 שעות
 ```
 
+### שעות שקטות (ללא סריקה בלילה)
+כדי שהבוט **לא יסרוק** בין 02:00 ל-07:00 (לפי `TIMEZONE`):
+```env
+QUIET_HOURS_START=2
+QUIET_HOURS_END=7
+```
+
 ### הוספת מילות מפתח
 ב-`.env`:
 ```env

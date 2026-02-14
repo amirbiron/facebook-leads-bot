@@ -4,10 +4,17 @@ Facebook Leads Finder Bot
 """
 import asyncio
 from datetime import datetime
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from config import config, CHECK_INTERVAL_MINUTES
+from config import (
+    config,
+    CHECK_INTERVAL_MINUTES,
+    TIMEZONE,
+    QUIET_HOURS_START,
+    QUIET_HOURS_END,
+)
 from models import Database, Post, Group
 from services import FacebookScraper, KeywordsMatcher, TelegramBot
 from utils.logger import get_logger
@@ -70,12 +77,27 @@ class LeadsFinder:
     async def scan_cycle(self):
         """מחזור סריקה אחד"""
         try:
+            # Skip scanning during quiet hours (local time)
+            tz = pytz.timezone(TIMEZONE)
+            now_local = datetime.now(tz)
+            start_h = QUIET_HOURS_START
+            end_h = QUIET_HOURS_END
+            in_quiet_hours = (
+                (start_h < end_h and start_h <= now_local.hour < end_h)
+                or (start_h > end_h and (now_local.hour >= start_h or now_local.hour < end_h))
+            )
+            if in_quiet_hours:
+                logger.info(
+                    f"🌙 שעות שקטות ({TIMEZONE}) {start_h:02d}:00-{end_h:02d}:00 - מדלג על סריקה (עכשיו {now_local:%H:%M})"
+                )
+                return
+
             if self.telegram_bot.is_paused:
                 logger.info("⏸ הניטור מושהה - מדלג על הסריקה")
                 return
             
             logger.info("=" * 50)
-            logger.info(f"🔍 מתחיל מחזור סריקה - {datetime.now()}")
+            logger.info(f"🔍 מתחיל מחזור סריקה - {now_local}")
             logger.info("=" * 50)
             
             # סריקת פייסבוק
