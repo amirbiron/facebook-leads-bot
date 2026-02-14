@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 
 from config import (
     FB_EMAIL, FB_PASSWORD, FB_GROUPS, 
-    POSTS_PER_GROUP, HEADLESS_MODE
+    POSTS_PER_GROUP, GROUPS_PER_CYCLE, HEADLESS_MODE
 )
 from utils.logger import get_logger
 
@@ -312,10 +312,10 @@ class FacebookScraper:
             if not self.login():
                 return all_posts
             
-            # סקרייפינג של 1-2 קבוצות אקראיות בכל פעם
+            # סקרייפינג של עד GROUPS_PER_CYCLE קבוצות אקראיות בכל פעם
             groups_to_scrape = random.sample(
                 FB_GROUPS, 
-                min(2, len(FB_GROUPS))
+                min(GROUPS_PER_CYCLE, len(FB_GROUPS))
             )
             
             for group_url in groups_to_scrape:
