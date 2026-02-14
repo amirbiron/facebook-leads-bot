@@ -1,0 +1,36 @@
+services:
+  - type: worker
+    name: facebook-leads-bot
+    env: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: DATABASE_NAME
+        value: facebook_leads
+      - key: FB_EMAIL
+        sync: false
+      - key: FB_PASSWORD
+        sync: false
+      - key: FB_GROUPS
+        sync: false
+      - key: CHECK_INTERVAL_MINUTES
+        value: 45
+      - key: POSTS_PER_GROUP
+        value: 10
+      - key: HEADLESS_MODE
+        value: true
+      - key: POSITIVE_KEYWORDS
+        sync: false
+      - key: NEGATIVE_KEYWORDS
+        sync: false
+      - key: TIMEZONE
+        value: Asia/Jerusalem
+      - key: LOG_LEVEL
+        value: INFO
