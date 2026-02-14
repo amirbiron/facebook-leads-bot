@@ -1,6 +1,7 @@
 """
 שירות סקרייפינג של פייסבוק
 """
+import os
 import time
 import random
 from datetime import datetime
@@ -59,12 +60,21 @@ class FacebookScraper:
             options = uc.ChromeOptions()
             
             if HEADLESS_MODE:
-                options.add_argument('--headless')
+                # Chrome "old headless" is being phased out; prefer the new headless mode.
+                options.add_argument('--headless=new')
+                options.add_argument('--disable-gpu')
+                options.add_argument('--window-size=1920,1080')
             
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-blink-features=AutomationControlled')
             options.add_argument('--lang=he-IL')
+            options.add_argument('--no-first-run')
+            options.add_argument('--no-default-browser-check')
+
+            chrome_bin = os.getenv("CHROME_BIN")
+            if chrome_bin:
+                options.binary_location = chrome_bin
             
             # User agent אמיתי
             options.add_argument(
