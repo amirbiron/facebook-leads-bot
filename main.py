@@ -3,6 +3,7 @@ Facebook Leads Finder Bot
 מערכת לחיפוש לידים מפייסבוק
 """
 import asyncio
+import gc
 from datetime import datetime
 import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -146,6 +147,10 @@ class LeadsFinder:
             
         except Exception as e:
             logger.error(f"❌ שגיאה במחזור סריקה: {e}")
+        finally:
+            # Force garbage collection after each scan cycle to free memory
+            gc.collect()
+            logger.debug("🧹 ניקוי זיכרון אחרי מחזור סריקה")
     
     async def shutdown(self):
         """כיבוי מסודר"""

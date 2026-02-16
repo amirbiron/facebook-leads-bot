@@ -23,9 +23,11 @@ services:
       - key: CHECK_INTERVAL_MINUTES
         value: 180
       - key: POSTS_PER_GROUP
-        value: 10
-      - key: GROUPS_PER_CYCLE
         value: 5
+      - key: GROUPS_PER_CYCLE
+        value: 2
+      - key: DEBUG_MODE
+        value: false
       - key: QUIET_HOURS_START
         value: 2
       - key: QUIET_HOURS_END
