@@ -24,13 +24,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p /tmp/chrome-data
+# Create necessary directories with enough shared memory for Chrome
+RUN mkdir -p /tmp/chrome-data /dev/shm
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV HEADLESS_MODE=true
+# Disable debug screenshots/HTML dumps in production to save memory
+ENV DEBUG_MODE=false
 
 # Run the bot
 CMD ["python", "main.py"]

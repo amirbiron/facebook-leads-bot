@@ -10,6 +10,7 @@
 6. חילוץ טקסט משופר עם ניקוי
 """
 import os
+import gc
 import re
 import time
 import random
@@ -22,7 +23,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
-    TimeoutException, NoSuchElementException, 
+    TimeoutException, NoSuchElementException,
     StaleElementReferenceException, WebDriverException
 )
 import undetected_chromedriver as uc
@@ -37,7 +38,7 @@ logger = get_logger(__name__)
 
 # תיקיית debug - screenshots ו-HTML dumps
 DEBUG_DIR = Path(os.getenv("DEBUG_DIR", "/tmp/fb_debug"))
-DEBUG_MODE = os.getenv("DEBUG_MODE", "true").lower() == "true"
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
 
 class HumanBehavior:
@@ -171,7 +172,7 @@ class FacebookScraper:
     # ============================================================
 
     def setup_driver(self):
-        """הגדרת דפדפן"""
+        """הגדרת דפדפן - אופטימיזציה לזיכרון מינימלי"""
         try:
             options = uc.ChromeOptions()
 
@@ -187,6 +188,32 @@ class FacebookScraper:
             options.add_argument('--no-first-run')
             options.add_argument('--no-default-browser-check')
             options.add_argument('--disable-notifications')
+
+            # --- Memory optimization flags ---
+            options.add_argument('--renderer-process-limit=1')
+            options.add_argument('--disable-extensions')
+            options.add_argument('--disable-component-extensions-with-background-pages')
+            options.add_argument('--disable-background-networking')
+            options.add_argument('--disable-sync')
+            options.add_argument('--disable-translate')
+            options.add_argument('--disable-default-apps')
+            options.add_argument('--disable-software-rasterizer')
+            options.add_argument('--disable-logging')
+            options.add_argument('--disable-features=TranslateUI,BlinkGenPropertyTrees,AudioServiceOutOfProcess,IsolateOrigins,site-per-process')
+            options.add_argument('--js-flags=--max-old-space-size=128')
+            options.add_argument('--disable-application-cache')
+            options.add_argument('--aggressive-cache-discard')
+            options.add_argument('--disable-hang-monitor')
+            options.add_argument('--mute-audio')
+            options.add_argument('--disable-component-update')
+
+            # Block images to save significant memory
+            prefs = {
+                'profile.managed_default_content_settings.images': 2,
+                'disk-cache-size': 1,
+                'profile.default_content_setting_values.media_stream': 2,
+            }
+            options.add_experimental_option('prefs', prefs)
 
             chrome_bin = os.getenv("CHROME_BIN")
             if chrome_bin:
@@ -207,7 +234,7 @@ class FacebookScraper:
                 )
 
             self.driver = uc.Chrome(options=options)
-            self.driver.set_page_load_timeout(45)
+            self.driver.set_page_load_timeout(30)
 
             logger.info("✅ דפדפן הוגדר בהצלחה (מצב: %s)",
                         "מובייל" if self._use_mobile else "דסקטופ")
@@ -482,7 +509,7 @@ class FacebookScraper:
         פוסטים כפולים מסוננים לפי hash.
         """
         all_posts = []
-        max_scrolls = 8
+        max_scrolls = 5  # reduced from 8 to save memory
         no_new_count = 0
 
         for scroll_num in range(max_scrolls):
@@ -723,9 +750,26 @@ class FacebookScraper:
     # Main flow
     # ============================================================
 
+    def _clear_browser_memory(self):
+        """ניקוי זיכרון הדפדפן בין קבוצות"""
+        if not self.driver:
+            return
+        try:
+            # Clear browser caches via CDP
+            self.driver.execute_cdp_cmd('Network.clearBrowserCache', {})
+        except Exception:
+            pass
+        try:
+            self.driver.execute_cdp_cmd('HeapProfiler.collectGarbage', {})
+        except Exception:
+            pass
+        # Python GC
+        gc.collect()
+
     def scrape_all_groups(self) -> List[Dict]:
         """סקרייפינג של כל הקבוצות"""
         all_posts = []
+        self._seen_post_hashes.clear()
 
         if not self.setup_driver():
             return all_posts
@@ -744,6 +788,9 @@ class FacebookScraper:
                 posts = self.scrape_group(group_url)
                 all_posts.extend(posts)
 
+                # ניקוי זיכרון בין קבוצות
+                self._clear_browser_memory()
+
                 # המתנה בין קבוצות (לא אחרי האחרונה)
                 if i < len(groups_to_scrape) - 1:
                     delay = random.uniform(10, 20)
@@ -759,7 +806,7 @@ class FacebookScraper:
         return all_posts
 
     def close(self):
-        """סגירת הדפדפן"""
+        """סגירת הדפדפן ושחרור זיכרון"""
         if self.driver:
             try:
                 self.driver.quit()
@@ -768,3 +815,5 @@ class FacebookScraper:
                 pass
             self.driver = None
             self.is_logged_in = False
+        self._seen_post_hashes.clear()
+        gc.collect()
