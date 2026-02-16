@@ -21,11 +21,11 @@ FB_GROUPS = os.getenv('FB_GROUPS', '').split(',')
 
 # Scraper
 CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 180))
-POSTS_PER_GROUP = int(os.getenv('POSTS_PER_GROUP', 10))
-GROUPS_PER_CYCLE = int(os.getenv('GROUPS_PER_CYCLE', 5))
+POSTS_PER_GROUP = int(os.getenv('POSTS_PER_GROUP', 5))  # Reduced from 10 to 5 for memory
+GROUPS_PER_CYCLE = int(os.getenv('GROUPS_PER_CYCLE', 2))  # Reduced from 5 to 2 for memory
 QUIET_HOURS_START = int(os.getenv('QUIET_HOURS_START', 2))  # 02:00
 QUIET_HOURS_END = int(os.getenv('QUIET_HOURS_END', 7))      # 07:00
-HEADLESS_MODE = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
+HEADLESS_MODE = os.getenv('HEADLESS_MODE', 'true').lower() == 'true'  # Default to true for production
 
 # Keywords
 POSITIVE_KEYWORDS = [

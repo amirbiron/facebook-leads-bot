@@ -14,6 +14,7 @@ import re
 import time
 import random
 import hashlib
+import gc
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Set
@@ -37,7 +38,8 @@ logger = get_logger(__name__)
 
 # תיקיית debug - screenshots ו-HTML dumps
 DEBUG_DIR = Path(os.getenv("DEBUG_DIR", "/tmp/fb_debug"))
-DEBUG_MODE = os.getenv("DEBUG_MODE", "true").lower() == "true"
+# Disable debug mode in production to save memory (screenshots + HTML dumps)
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
 
 class HumanBehavior:
@@ -179,6 +181,7 @@ class FacebookScraper:
                 options.add_argument('--headless=new')
                 options.add_argument('--disable-gpu')
 
+            # === AGGRESSIVE MEMORY OPTIMIZATION FOR 512MB LIMIT ===
             options.add_argument('--window-size=420,900')  # גודל מובייל
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
@@ -187,6 +190,57 @@ class FacebookScraper:
             options.add_argument('--no-first-run')
             options.add_argument('--no-default-browser-check')
             options.add_argument('--disable-notifications')
+            
+            # Memory optimization flags (critical for 512MB limit)
+            options.add_argument('--disable-extensions')
+            options.add_argument('--disable-plugins')
+            options.add_argument('--disable-software-rasterizer')
+            options.add_argument('--disable-webgl')
+            options.add_argument('--disable-3d-apis')
+            options.add_argument('--disable-accelerated-2d-canvas')
+            options.add_argument('--disable-accelerated-video-decode')
+            options.add_argument('--disable-background-networking')
+            options.add_argument('--disable-background-timer-throttling')
+            options.add_argument('--disable-backgrounding-occluded-windows')
+            options.add_argument('--disable-breakpad')
+            options.add_argument('--disable-component-extensions-with-background-pages')
+            options.add_argument('--disable-features=TranslateUI,BlinkGenPropertyTrees')
+            options.add_argument('--disable-ipc-flooding-protection')
+            options.add_argument('--disable-renderer-backgrounding')
+            options.add_argument('--disable-sync')
+            options.add_argument('--enable-features=NetworkService,NetworkServiceInProcess')
+            options.add_argument('--force-color-profile=srgb')
+            options.add_argument('--hide-scrollbars')
+            options.add_argument('--mute-audio')
+            options.add_argument('--disable-client-side-phishing-detection')
+            options.add_argument('--disable-default-apps')
+            options.add_argument('--disable-hang-monitor')
+            options.add_argument('--disable-popup-blocking')
+            options.add_argument('--disable-prompt-on-repost')
+            options.add_argument('--metrics-recording-only')
+            options.add_argument('--no-pings')
+            options.add_argument('--password-store=basic')
+            options.add_argument('--use-mock-keychain')
+            options.add_argument('--disable-setuid-sandbox')
+            
+            # Memory limits
+            options.add_argument('--js-flags=--max-old-space-size=256')  # Limit JS heap
+            
+            # Disable loading of images, CSS, and JS to save even more memory
+            prefs = {
+                'profile.default_content_setting_values': {
+                    'images': 2,  # Disable images
+                    'javascript': 1,  # Enable JS (needed for Facebook)
+                },
+                'profile.managed_default_content_settings': {
+                    'images': 2
+                },
+                'disk-cache-size': 4096
+            }
+            options.add_experimental_option('prefs', prefs)
+            
+            # Additional memory limits
+            options.add_argument('--max-old-space-size=256')  # Limit V8 memory
 
             chrome_bin = os.getenv("CHROME_BIN")
             if chrome_bin:
@@ -482,7 +536,8 @@ class FacebookScraper:
         פוסטים כפולים מסוננים לפי hash.
         """
         all_posts = []
-        max_scrolls = 8
+        # Reduced scrolls to save memory (was 8, now 4)
+        max_scrolls = 4
         no_new_count = 0
 
         for scroll_num in range(max_scrolls):
@@ -743,6 +798,11 @@ class FacebookScraper:
             for i, group_url in enumerate(groups_to_scrape):
                 posts = self.scrape_group(group_url)
                 all_posts.extend(posts)
+                
+                # Periodic garbage collection to free memory
+                if (i + 1) % 1 == 0:  # After each group
+                    gc.collect()
+                    logger.debug(f"ניקוי זיכרון אחרי קבוצה {i + 1}")
 
                 # המתנה בין קבוצות (לא אחרי האחרונה)
                 if i < len(groups_to_scrape) - 1:
@@ -759,12 +819,29 @@ class FacebookScraper:
         return all_posts
 
     def close(self):
-        """סגירת הדפדפן"""
+        """סגירת הדפדפן עם ניקוי זיכרון אגרסיבי"""
         if self.driver:
             try:
+                # Close all windows first
+                for handle in self.driver.window_handles:
+                    try:
+                        self.driver.switch_to.window(handle)
+                        self.driver.close()
+                    except Exception:
+                        pass
+                
+                # Quit the driver
                 self.driver.quit()
                 logger.info("דפדפן נסגר")
-            except Exception:
-                pass
-            self.driver = None
-            self.is_logged_in = False
+            except Exception as e:
+                logger.debug(f"שגיאה בסגירת דפדפן: {e}")
+            finally:
+                self.driver = None
+                self.is_logged_in = False
+                
+                # Clear seen posts to free memory
+                self._seen_post_hashes.clear()
+                
+                # Force garbage collection
+                gc.collect()
+                logger.debug("זיכרון נוקה")
